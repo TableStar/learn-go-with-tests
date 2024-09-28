@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	"golang.org/x/exp/slices"
+	"slices"
 )
 
 func TestSum(t *testing.T) {
