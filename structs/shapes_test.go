@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"testing"
 )
 
@@ -16,10 +17,23 @@ func TestPerimeter(t *testing.T) {
 
 func TestArea(t *testing.T) {
 
-	areaTest := []struct {
+	areaTests := []struct {
 		shape Shape
 		want  float64
-	}{}
+	}{
+		{Rectangle{12, 6}, 72.0},
+		{Circle{10}, 314.1592653589793},
+	}
+
+	fmt.Println(areaTests)
+
+	for _, tt := range areaTests {
+		got := tt.shape.Area()
+		want := tt.want
+		if got != want {
+			t.Errorf("got %g want %g", got, want)
+		}
+	}
 
 	checkArea := func(t testing.TB, shape Shape, want float64) {
 		t.Helper()
