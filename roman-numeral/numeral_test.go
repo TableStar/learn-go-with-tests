@@ -1,13 +1,18 @@
 package roman_numeral
 
 import (
+	"errors"
 	"fmt"
+	"log"
 	"testing"
+	"testing/quick"
 )
 
 var cases = []struct {
-	Arabic int
-	Roman  string
+	Arabic             uint16
+	Roman              string
+	ErrorRomanToArabic error
+	ErrorArabicToRoman error
 }{
 	{Arabic: 1, Roman: "I"},
 	{Arabic: 2, Roman: "II"},
@@ -38,12 +43,26 @@ var cases = []struct {
 	{Arabic: 2014, Roman: "MMXIV"},
 	{Arabic: 1006, Roman: "MVI"},
 	{Arabic: 798, Roman: "DCCXCVIII"},
+	{Arabic: 5000, Roman: "", ErrorRomanToArabic: ErrValueTooLarge, ErrorArabicToRoman: ErrNoRomanZero},
 }
 
 func TestRomanNumerals(t *testing.T) {
 	for _, test := range cases {
 		t.Run(fmt.Sprintf("%d gets converted to %q", test.Arabic, test.Roman), func(t *testing.T) {
-			got := ConvertToRoman(test.Arabic)
+			got, err := ConvertToRoman(test.Arabic)
+			if test.ErrorRomanToArabic != nil {
+				if err == nil {
+					t.Fatalf("expected error but got nil for Arabic %d", test.Arabic)
+				}
+				if !errors.Is(err, test.ErrorRomanToArabic) {
+					t.Fatalf("unexpected error: got %v, want %v", err, test.ErrorRomanToArabic)
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("unexpected error for Arabic %d: %v", test.Arabic, err)
+			}
 			if got != test.Roman {
 				t.Errorf("got %q, want %q", got, test.Roman)
 			}
@@ -54,10 +73,38 @@ func TestRomanNumerals(t *testing.T) {
 func TestConvertToArabs(t *testing.T) {
 	for _, test := range cases {
 		t.Run(fmt.Sprintf("%q gets converted to %d", test.Roman, test.Arabic), func(t *testing.T) {
-			got := ConvertToArabic(test.Roman)
+			got, err := ConvertToArabic(test.Roman)
+			if test.ErrorArabicToRoman != nil {
+				if err == nil {
+					t.Fatalf("expected error but got nil for Roman %q", test.Roman)
+				}
+				if !errors.Is(err, test.ErrorArabicToRoman) {
+					t.Fatalf("unexpected error: got %v, want %v", err, test.ErrorArabicToRoman)
+				}
+				return
+			}
+
+			if err != nil {
+				t.Fatalf("unexpected error for Roman %q: %v", test.Roman, err)
+			}
 			if got != test.Arabic {
 				t.Errorf("got %d, want %d", got, test.Arabic)
 			}
 		})
+	}
+}
+
+func TestPropertiesOfConversion(t *testing.T) {
+	assertion := func(arabic uint16) bool {
+		if arabic > 3999 {
+			log.Println(arabic)
+			return true
+		}
+		roman, _ := ConvertToRoman(arabic)
+		fromRoman, _ := ConvertToArabic(roman)
+		return fromRoman == arabic
+	}
+	if err := quick.Check(assertion, &quick.Config{MaxCount: 100}); err != nil {
+		t.Error("failed checks", err)
 	}
 }

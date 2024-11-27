@@ -1,9 +1,12 @@
 package roman_numeral
 
-import "strings"
+import (
+	"errors"
+	"strings"
+)
 
 type RomanNumeral struct {
-	Value  int
+	Value  uint16
 	Symbol string
 }
 
@@ -23,7 +26,14 @@ var allRomanNumerals = []RomanNumeral{
 	{1, "I"},
 }
 
-func ConvertToRoman(arabic int) string {
+var ErrValueTooLarge = errors.New("input number can't exceed 3999")
+var ErrNoRomanZero = errors.New("invalid Roman numeral: no equivalent Arabic value")
+
+func ConvertToRoman(arabic uint16) (string, error) {
+	if arabic > 3999 {
+		return "", ErrValueTooLarge
+	}
+
 	var res strings.Builder
 
 	for _, numeral := range allRomanNumerals {
@@ -32,16 +42,20 @@ func ConvertToRoman(arabic int) string {
 			arabic -= numeral.Value
 		}
 	}
-	return res.String()
+	return res.String(), nil
 }
 
-func ConvertToArabic(roman string) int {
-	var arabic int
+func ConvertToArabic(roman string) (uint16, error) {
+	var arabic uint16
 	for _, numeral := range allRomanNumerals {
 		for strings.HasPrefix(roman, numeral.Symbol) {
 			arabic += numeral.Value
 			roman = strings.TrimPrefix(roman, numeral.Symbol)
 		}
 	}
-	return arabic
+
+	if arabic <= 0 {
+		return 0, ErrNoRomanZero
+	}
+	return arabic, nil
 }
