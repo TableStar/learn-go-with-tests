@@ -34,3 +34,7 @@ func ConvertToRoman(arabic int) string {
 	}
 	return res.String()
 }
+
+func ConvertToArabic(roman string) int {
+	return 1
+}
